@@ -1,23 +1,73 @@
+// @ts-check
+
 // alert("Hello from your Chrome extension!");
 
-const shortcutCodes = {
-  ":ascii": "¯\\_(ツ)_/¯"
+const startup = ()=> {
+  // Check in localStorage for remote replacements JSON URL
+  const replacementsUrl = 'https://www.dropbox.com/s/eo1svxzp65oibro/text_replacements.json?dl=1';
+
+  // If there is one, fetch from there
+  if (replacementsUrl) {
+    fetchRemoteReplacementsJson(replacementsUrl);
+    return;
+  }
+
+  // Else, check in localStorage for stringified replacements data, and use that
+};
+
+const fetchRemoteReplacementsJson = (replacementsUrl)=> {
+  chrome.runtime.sendMessage(
+    {
+        contentScriptQuery: "getData",
+        url: replacementsUrl
+    }, function (response) {
+        // debugger;
+        if (response != undefined && response != "") {
+          console.warn({ response });
+          setJsonReplacements(response);
+        }
+        else {
+            // debugger;
+            throw new Error('ERROR FETCHING REMOTE REPLACEMENTS JSON');
+        }
+    }
+  )
+};
+
+let shortcutCodes;
+
+// [
+//   {
+//     'replacement': '¯\\_(ツ)_/¯',
+//     'shortcut': ':ascii'
+//   },
+//   {
+//     "replacement":"➔",
+//     "shortcut": "—>"
+//   }
+// ];
+
+const setJsonReplacements = (replacements)=> {
+  console.warn('FETCHED REPLACEMENTS FROM REMOTE JSON', replacements);
+  shortcutCodes = replacements;
+};
+
+const escapeRegExp = (str)=> {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 };
 
 const matchValues = (fieldValue)=> {
-  const shortcutObjectKeys = Object.keys(shortcutCodes);  
   let replacedText = fieldValue;
 
-  for (const shortcut of shortcutObjectKeys) {
-    const regExp = new RegExp(shortcut, 'gi');
+  for (const shortcut of shortcutCodes) {
+    const thisReplacement = shortcut.replacement;
+
+    const escapedString = escapeRegExp(shortcut.shortcut);
+    const regExp = new RegExp(escapedString, 'gi');
     const match = fieldValue.match(regExp);
 
     if (match) {
-      const matchedKey = match[0];
-      const matchedValue = shortcutCodes[matchedKey];
-
-      const matchedKeyRegExp = new RegExp(match[0], 'gi');      
-      replacedText = fieldValue.replace(matchedKeyRegExp, matchedValue);
+      replacedText = fieldValue.replace(regExp, thisReplacement);
     };
   };
 
@@ -25,9 +75,9 @@ const matchValues = (fieldValue)=> {
 };
 
 const replaceText = (event)=> {
-  const keyCode = event.keyCode;
 
-  console.log({ keyPressed: keyCode });
+
+  const keyCode = event.keyCode;
 
   const inputElementType = event.srcElement.nodeName.toLowerCase();
   let inputFieldValue = event.srcElement.value;
@@ -52,6 +102,9 @@ const replaceText = (event)=> {
 };
 
 window.addEventListener('keyup', replaceText);
+window.onload = ()=>{
+  startup();
+};
 
 // chrome.runtime.onMessage.addListener(
 //   function(request, sender, sendResponse) {
