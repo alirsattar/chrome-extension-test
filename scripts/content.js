@@ -3,8 +3,9 @@
 // alert("Hello from your Chrome extension!");
 
 const startup = ()=> {
-  // Check in localStorage for remote replacements JSON URL
   const replacementsUrl = 'https://www.dropbox.com/s/eo1svxzp65oibro/text_replacements.json?dl=1';
+
+  // Check in localStorage for remote replacements JSON URL
 
   // If there is one, fetch from there
   if (replacementsUrl) {
