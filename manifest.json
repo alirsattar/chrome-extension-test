@@ -4,9 +4,7 @@
   "version": "0.1",
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
+      "matches": ["<all_urls>"],
       "js": [
         "scripts/vendor/jquery-3.5.1.slim.min.js",
         "scripts/content.js"
@@ -14,9 +12,16 @@
     }
   ],
   "browser_action": {
-    "default_icon": "images/get_started16.png"
+    "default_icon": "images/get_started16.png",
+    "default_title": "iOS Text Replacements in Chrome",
+    "default_popup": "templates/test_page.html"
   },
   "background": {
-    "scripts": ["scripts/background.js"]
-  }
+    "scripts": [
+      "scripts/background.js"
+    ]
+  },
+  "permissions": [
+    "storage"
+  ]
 }
