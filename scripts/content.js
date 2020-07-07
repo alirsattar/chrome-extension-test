@@ -2,6 +2,8 @@
 
 // alert("Hello from your Chrome extension!");
 
+import { SettingsManager } from './settings';
+
 class TextReplacer {
   shortcutCodes = [];
 
@@ -19,7 +21,7 @@ class TextReplacer {
     if (existingReplacements) {
       // console.log({existingReplacements});
       this.shortcutCodes = existingReplacements;
-      console.log('this.shortcutCodes populated from local: ', this.shortcutCodes);
+      // console.log('this.shortcutCodes populated from local: ', this.shortcutCodes);
     } else {
       // TODO: Replace this hard coded value
       const replacementsUrl =
@@ -33,7 +35,7 @@ class TextReplacer {
 
         if (remoteReplacements) {
           this.shortcutCodes = remoteReplacements;
-          console.log('this.shortcutCodes populated from remote: ', this.shortcutCodes);
+          // console.log('this.shortcutCodes populated from remote: ', this.shortcutCodes);
 
           this.setJsonReplacements(remoteReplacements);
         }
@@ -46,27 +48,31 @@ class TextReplacer {
   }
 
   fetchRemoteReplacementsJson(replacementsUrl) {
-    return new Promise((resolve, reject)=> {
-      // @ts-ignore
-      chrome.runtime.sendMessage(
-        {
-          contentScriptQuery: "getData",
-          url: replacementsUrl,
-        },
-        (response)=> {
-          // debugger;
-          if (response != undefined && response != "") {
-            // console.warn('response from fetchRemoteReplacementsJson:');
-            // console.log( response );
-
-            resolve(response);
-          } else {
+    if (replacementsUrl) {
+      return new Promise((resolve, reject)=> {
+        // @ts-ignore
+        chrome.runtime.sendMessage(
+          {
+            contentScriptQuery: "getData",
+            url: replacementsUrl,
+          },
+          (response)=> {
             // debugger;
-            reject(new Error("ERROR FETCHING REMOTE REPLACEMENTS JSON"));
+            if (response != undefined && response != "") {
+              // console.warn('response from fetchRemoteReplacementsJson:');
+              // console.log( response );
+  
+              resolve(response);
+            } else {
+              // debugger;
+              reject(new Error("ERROR FETCHING REMOTE REPLACEMENTS JSON"));
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    } else {
+      console.error('NO REPLACEMENTS URL PROVIDED');
+    }
   }
 
   async setJsonReplacements(replacements) {
@@ -81,7 +87,7 @@ class TextReplacer {
     const existingReplacements = await this.extStorageGet("replacements");
 
     console.warn('EXISTINGREPLACEMENTS IN SETJSONREPLACEMENTS:');
-    console.log(existingReplacements);
+    // console.log(existingReplacements);
 
     if (existingReplacements) {
       updatedReplacements.forEach((replacement)=> {
@@ -93,7 +99,7 @@ class TextReplacer {
     const replacementsArray = Array.from(updatedReplacements);
 
     console.warn('UPDATEDREPLACEMENTS AFTER ADDING EXISTING:');
-    console.log(replacementsArray);
+    // console.log(replacementsArray);
 
     this.extStorageSet('replacements', replacementsArray);
   }
@@ -105,7 +111,7 @@ class TextReplacer {
     theObjectToSave[fieldString] = theValue;
 
     console.warn('Value being saved to extension storage:');
-    console.log(theValue);
+    // console.log(theValue);
 
     // Check that there's some code there.
     if (!theValue) {
@@ -113,15 +119,13 @@ class TextReplacer {
       return;
     };
 
-
-
     // Save it using the Chrome extension storage API.
     return new Promise((resolve, reject) => {
       // @ts-ignore
       chrome.storage.sync.set(theObjectToSave, function () {
         // Notify that we saved.
         console.warn("Settings saved");
-        console.log(theObjectToSave);
+        // console.log(theObjectToSave);
         resolve(theObjectToSave);
       });
     });
@@ -134,8 +138,8 @@ class TextReplacer {
         // @ts-ignore
         const theReplacements = Object.values(result.replacements);
 
-        console.log("Value coming back from extension storage is:");
-        console.log(theReplacements);
+        // console.log("Value coming back from extension storage is:");
+        // console.log(theReplacements);
 
         if (result) {
           resolve(theReplacements);
@@ -193,11 +197,33 @@ class TextReplacer {
       }
     }
   }
-}
+};
+
+// class SettingsManager {
+//   testFunction(event) {
+//     event.preventDefault();
+
+//     console.log('TESTFUNCTION FIRED');
+//   }
+
+//   // CREATE: Save URL and edited shortcut list
+
+//   // RETRIEVE: Get URL and edited shortcut list
+
+//   // UPDATE: Save changes to URL and shortcut list
+
+//   // DELETE: Clear URL, shortcut list
+// };
 
 const replacer = new TextReplacer();
+const settingsManager = new SettingsManager();
 
 window.addEventListener("keyup", (event)=> replacer.replaceText(event));
-// window.onload = () => {
-//   replacer.startup();
-// };
+
+window.onload = () => {
+  const saveButton = document.getElementById('replacer-save-button');
+
+  if (saveButton) {
+    saveButton.addEventListener('click', settingsManager.testFunction);
+  };
+};

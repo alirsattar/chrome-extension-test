@@ -6,6 +6,7 @@
     {
       "matches": ["<all_urls>"],
       "js": [
+        "scripts/settings.js",
         "scripts/vendor/jquery-3.5.1.slim.min.js",
         "scripts/content.js"
       ]
@@ -14,7 +15,7 @@
   "browser_action": {
     "default_icon": "images/get_started16.png",
     "default_title": "iOS Text Replacements in Chrome",
-    "default_popup": "templates/test_page.html"
+    "default_popup": "templates/settings.html"
   },
   "background": {
     "scripts": [
