@@ -2,7 +2,7 @@
 
 // alert("Hello from your Chrome extension!");
 
-import { SettingsManager } from './settings';
+// import { SettingsManager } from './settings';
 
 class TextReplacer {
   shortcutCodes = [];
@@ -84,16 +84,29 @@ class TextReplacer {
     // Set these replacements in extension storage
 
     // But first, get current replacements object -- so we can merge new ones into that
-    const existingReplacements = await this.extStorageGet("replacements");
+    const existingReplacementsResponse = await this.extStorageGet("replacements");
 
-    console.warn('EXISTINGREPLACEMENTS IN SETJSONREPLACEMENTS:');
-    // console.log(existingReplacements);
+    existingReplacementsResponse.then((replacements)=> {
 
-    if (existingReplacements) {
+      console.warn({ replacements });
+
       updatedReplacements.forEach((replacement)=> {
         updatedReplacements.add(replacement);
       });
-    };
+    })
+    .catch((err)=> {
+
+      console.warn({ err });
+
+      // @ts-ignore
+      if (existingReplacementsResponse.error) {
+        // @ts-ignore
+        console.error(existingReplacementsResponse.error);
+      };  
+    })
+
+    console.warn('EXISTINGREPLACEMENTS IN SETJSONREPLACEMENTS:');
+    console.log({existingReplacements: existingReplacementsResponse});
 
     // Convert to array for saving
     const replacementsArray = Array.from(updatedReplacements);
@@ -134,18 +147,21 @@ class TextReplacer {
   async extStorageGet(fieldNameString) {
     return new Promise((resolve, reject) => {
       // @ts-ignore
-      chrome.storage.sync.get([fieldNameString], function (result) {
-        // @ts-ignore
-        const theReplacements = Object.values(result.replacements);
-
+      chrome.storage.sync.get([fieldNameString], (result)=> {
         // console.log("Value coming back from extension storage is:");
         // console.log(theReplacements);
+        
+        if (result && result.replacements) {
 
-        if (result) {
+          // console.log({result});
+
+          // @ts-ignore
+          const theReplacements = Object.values(result.replacements);
           resolve(theReplacements);
         } else {
-          console.error(`No extension storage ${fieldNameString} object found`);
-          reject();
+
+          // console.log({result});
+          reject({error: `No extension storage ${fieldNameString} object found`});
         }
       });
     });
@@ -199,31 +215,44 @@ class TextReplacer {
   }
 };
 
-// class SettingsManager {
-//   testFunction(event) {
-//     event.preventDefault();
+class SettingsManager {
 
-//     console.log('TESTFUNCTION FIRED');
-//   }
+  constructor() {
+    // console.log('SETTINGSMANAGER CLASS ISNTANTIATED');
+  }
 
-//   // CREATE: Save URL and edited shortcut list
+  testFunction(event) {
+    event.preventDefault();
 
-//   // RETRIEVE: Get URL and edited shortcut list
+    console.log('TESTFUNCTION FIRED');
+  }
 
-//   // UPDATE: Save changes to URL and shortcut list
+  // CREATE: Save URL and edited shortcut list
 
-//   // DELETE: Clear URL, shortcut list
-// };
+  // RETRIEVE: Get URL and edited shortcut list
+
+  // UPDATE: Save changes to URL and shortcut list
+
+  // DELETE: Clear URL, shortcut list
+};
 
 const replacer = new TextReplacer();
 const settingsManager = new SettingsManager();
 
+// console.log({ replacer, settingsManager });
+
 window.addEventListener("keyup", (event)=> replacer.replaceText(event));
 
 window.onload = () => {
+
+  // console.log('ANYTHING');
+
   const saveButton = document.getElementById('replacer-save-button');
 
   if (saveButton) {
+
+    console.log('SAVE BUTTON PRESENT');
+
     saveButton.addEventListener('click', settingsManager.testFunction);
   };
 };
